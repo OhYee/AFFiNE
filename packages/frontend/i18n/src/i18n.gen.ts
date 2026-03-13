@@ -8060,6 +8060,26 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.no-permission"](): string;
     /**
+      * `Re-sync blobs from server`
+      */
+    ["com.affine.settings.workspace.storage.resync-blobs"](): string;
+    /**
+      * `Force re-download all blobs from the server into local cache. Use this after changing blob storage providers (e.g. from local filesystem to S3/OSS) or after enabling a CDN public path to ensure all images are refreshed.`
+      */
+    ["com.affine.settings.workspace.storage.resync-blobs.description"](): string;
+    /**
+      * `Re-sync blobs`
+      */
+    ["com.affine.settings.workspace.storage.resync-blobs.button"](): string;
+    /**
+      * `Syncing…`
+      */
+    ["com.affine.settings.workspace.storage.resync-blobs.syncing"](): string;
+    /**
+      * `Blobs re-synced`
+      */
+    ["com.affine.settings.workspace.storage.resync-blobs.done"](): string;
+    /**
       * `Unused blobs`
       */
     ["com.affine.settings.workspace.storage.unused-blobs"](): string;

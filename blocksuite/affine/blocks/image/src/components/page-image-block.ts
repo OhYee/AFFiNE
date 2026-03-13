@@ -8,6 +8,7 @@ import {
 import { ImageSelection } from '@blocksuite/affine-shared/selection';
 import { unsafeCSSVarV2 } from '@blocksuite/affine-shared/theme';
 import { SignalWatcher, WithDisposable } from '@blocksuite/global/lit';
+import { IS_MOBILE } from '@blocksuite/global/env';
 import type { BlockComponent, UIEventStateContext } from '@blocksuite/std';
 import {
   BlockSelection,
@@ -39,6 +40,8 @@ export class ImageBlockPageComponent extends SignalWatcher(
       justify-content: center;
       line-height: 0;
       cursor: pointer;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     affine-page-image .loading {
@@ -74,6 +77,7 @@ export class ImageBlockPageComponent extends SignalWatcher(
     }
 
     affine-page-image .resizable-img img {
+      max-width: 100%;
       width: 100%;
       height: 100%;
     }
@@ -237,6 +241,10 @@ export class ImageBlockPageComponent extends SignalWatcher(
       (event: MouseEvent) => {
         // the peek view need handle shift + click
         if (event.shiftKey) return;
+
+        // On mobile, allow the click to bubble up to the parent image block
+        // so it can open the peek view (image preview) on tap
+        if (IS_MOBILE) return;
 
         event.stopPropagation();
         selection.update(selList => {

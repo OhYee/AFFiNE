@@ -98,6 +98,9 @@ export const GenericImagePreviewModal = ({
     zoomOut,
     resetScale,
     currentScale,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
   } = useZoomControls({ zoomRef, imageRef });
 
   const downloadHandler = useAsyncCallback(async () => {
@@ -161,6 +164,9 @@ export const GenericImagePreviewModal = ({
               onMouseDown={handleDragStart}
               onMouseMove={handleDrag}
               onMouseUp={handleDragEnd}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               onLoad={resetZoom}
             />
             {isZoomedBigger ? null : (

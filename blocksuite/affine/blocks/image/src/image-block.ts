@@ -1,7 +1,7 @@
 import { CaptionedBlockComponent } from '@blocksuite/affine-components/caption';
 import { whenHover } from '@blocksuite/affine-components/hover';
 import { LoadingIcon } from '@blocksuite/affine-components/icons';
-import { Peekable } from '@blocksuite/affine-components/peek';
+import { peek, Peekable } from '@blocksuite/affine-components/peek';
 import { ResourceController } from '@blocksuite/affine-components/resource';
 import type { ImageBlockModel } from '@blocksuite/affine-model';
 import { ImageSelection } from '@blocksuite/affine-shared/selection';
@@ -28,9 +28,7 @@ import {
   turnImageIntoCardView,
 } from './utils';
 
-@Peekable({
-  enableOn: () => !IS_MOBILE,
-})
+@Peekable()
 export class ImageBlockComponent extends CaptionedBlockComponent<ImageBlockModel> {
   resizeable$ = computed(() =>
     this.std.selection.value.some(
@@ -81,6 +79,13 @@ export class ImageBlockComponent extends CaptionedBlockComponent<ImageBlockModel
     if (event.defaultPrevented) return;
 
     event.stopPropagation();
+
+    // On mobile, a tap should open the image preview directly
+    if (IS_MOBILE) {
+      peek(this);
+      return;
+    }
+
     const selectionManager = this.host.selection;
     const blockSelection = selectionManager.create(BlockSelection, {
       blockId: this.blockId,
