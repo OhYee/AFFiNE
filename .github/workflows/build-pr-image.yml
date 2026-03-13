@@ -199,9 +199,10 @@ jobs:
         id: tag
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          BRANCH_SLUG=$(echo "${{ github.ref_name }}" | sed 's|/|-|g')
-          echo "tag=ghcr.io/${{ github.repository_owner }}/affine-pr:${BRANCH_SLUG}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "latest=ghcr.io/${{ github.repository_owner }}/affine-pr:${BRANCH_SLUG}-latest" >> "$GITHUB_OUTPUT"
+          BRANCH_SLUG=$(echo "${{ github.ref_name }}" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]')
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "tag=ghcr.io/${OWNER}/affine-pr:${BRANCH_SLUG}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "latest=ghcr.io/${OWNER}/affine-pr:${BRANCH_SLUG}-latest" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

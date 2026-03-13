@@ -28,8 +28,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  not-copilot-pr:
+    name: Skip check (not a copilot branch PR)
+    runs-on: ubuntu-latest
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.head_ref, 'copilot/')) }}
+    steps:
+      - run: echo "Not a copilot branch PR — proceeding with full test suite"
+
   analyze:
     name: Analyze
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: --max-old-space-size=14384
@@ -65,6 +73,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
   lint:
     name: Lint
+    needs: [not-copilot-pr]
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
@@ -107,6 +116,7 @@ jobs:
 
   typecheck:
     name: Typecheck
+    needs: [not-copilot-pr]
     runs-on: ubuntu-24.04-arm
     env:
       NODE_OPTIONS: --max-old-space-size=14384
@@ -134,6 +144,7 @@ jobs:
 
   rust-test-filter:
     name: Rust test filter
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     outputs:
       run-rust: ${{ steps.rust-filter.outputs.rust }}
@@ -210,6 +221,7 @@ jobs:
 
   check-yarn-binary:
     name: Check yarn binary
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -222,6 +234,7 @@ jobs:
 
   e2e-blocksuite-test:
     name: E2E BlockSuite Test
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -254,6 +267,7 @@ jobs:
 
   e2e-blocksuite-cross-browser-test:
     name: E2E BlockSuite Cross Browser Test
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -284,6 +298,7 @@ jobs:
 
   e2e-test:
     name: E2E Test
+    needs: [not-copilot-pr]
     runs-on: ubuntu-24.04-arm
     env:
       DISTRIBUTION: web
@@ -317,6 +332,7 @@ jobs:
 
   e2e-mobile-test:
     name: E2E Mobile Test
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     env:
       DISTRIBUTION: mobile
@@ -387,6 +403,7 @@ jobs:
 
   build-native-linux:
     name: Build AFFiNE native (x86_64-unknown-linux-gnu)
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     env:
       CARGO_PROFILE_RELEASE_DEBUG: '1'
@@ -419,6 +436,7 @@ jobs:
 
   build-native-macos:
     name: Build AFFiNE native (${{ matrix.spec.target }})
+    needs: [not-copilot-pr]
     runs-on: ${{ matrix.spec.os }}
     env:
       CARGO_PROFILE_RELEASE_DEBUG: '1'
@@ -460,6 +478,7 @@ jobs:
   # and other ci jobs required linux native
   build-native-windows:
     name: Build AFFiNE native (${{ matrix.spec.target }})
+    needs: [not-copilot-pr]
     runs-on: ${{ matrix.spec.os }}
     env:
       CARGO_PROFILE_RELEASE_DEBUG: '1'
@@ -507,6 +526,7 @@ jobs:
 
   build-server-native:
     name: Build Server native
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     env:
       CARGO_PROFILE_RELEASE_DEBUG: '1'
@@ -532,6 +552,7 @@ jobs:
 
   build-electron-renderer:
     name: Build @affine/electron renderer
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -909,6 +930,7 @@ jobs:
 
   copilot-test-filter:
     name: Copilot test filter
+    needs: [not-copilot-pr]
     runs-on: ubuntu-latest
     outputs:
       run-api: ${{ steps.decision.outputs.run_api }}
