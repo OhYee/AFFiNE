@@ -10,6 +10,7 @@ import { useLiveData, useService } from '@toeverything/infra';
 import { EnableCloudPanel } from '../preference/enable-cloud';
 import { BlobManagementPanel } from './blob-management';
 import { DesktopExportPanel } from './export';
+import { ResyncBlobsPanel } from './resync-blobs';
 import { WorkspaceQuotaPanel } from './workspace-quota';
 
 export const WorkspaceSettingStorage = ({
@@ -54,6 +55,10 @@ export const WorkspaceSettingStorage = ({
               <DesktopExportPanel workspace={workspace} />
             </SettingWrapper>
           )}
+
+          <SettingWrapper>
+            <ResyncBlobsPanel />
+          </SettingWrapper>
 
           <SettingWrapper>
             <BlobManagementPanel />
