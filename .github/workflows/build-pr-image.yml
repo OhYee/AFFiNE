@@ -117,6 +117,12 @@ jobs:
           pattern: server-native-*
           merge-multiple: true
           path: ./packages/backend/native
+      - name: Create placeholder .node files for non-x64 architectures
+        # rspack statically resolves all require() branches in native/index.js,
+        # so arm64 and armv7 stubs must exist on disk even though we only ship x64.
+        run: |
+          touch ./packages/backend/native/server-native.arm64.node
+          touch ./packages/backend/native/server-native.armv7.node
       - name: Build Server
         run: yarn workspace @affine/server build
       - name: Upload server dist
