@@ -11,6 +11,7 @@ export interface Storages {
   };
   blob: {
     storage: ConfigItem<StorageProviderConfig>;
+    publicPath: string;
   };
 }
 
@@ -46,5 +47,9 @@ defineModuleConfig('storages', {
       },
     },
     schema: StorageJSONSchema,
+  },
+  'blob.publicPath': {
+    desc: 'The public accessible path prefix for blobs. When set, blob requests will be redirected to this URL prefix directly (e.g., a CDN URL like "https://cdn.example.com/blobs/"). This bypasses the AFFiNE server for serving blob data and reduces server bandwidth usage. Leave empty to serve blobs through the AFFiNE server.',
+    default: '',
   },
 });

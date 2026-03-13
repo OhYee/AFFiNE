@@ -283,6 +283,19 @@ export class WorkspaceBlobStorage {
     return this.url.link(`/api/workspaces/${workspaceId}/blobs/${avatarKey}`);
   }
 
+  getPublicUrl(workspaceId: string, key: string): string | null {
+    const publicPath = this.config.publicPath;
+    if (!publicPath) return null;
+
+    // Ensure exactly one '/' separator between publicPath and the workspace/key path
+    const base = publicPath.endsWith('/') ? publicPath : `${publicPath}/`;
+    let url = `${base}${workspaceId}/${key}`;
+    if (url.startsWith('/')) {
+      url = this.url.link(url);
+    }
+    return url;
+  }
+
   private trySyncBlobsMeta(workspaceId: string, blobs: ListObjectsMetadata[]) {
     for (const blob of blobs) {
       this.event.emit('workspace.blob.sync', {
