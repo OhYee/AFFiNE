@@ -111,11 +111,14 @@ if [[ "$DOCKER_ONLY" == "true" ]]; then
     MIRROR_ARGS+=(--build-arg "REGISTRY_MIRROR=${REGISTRY_MIRROR}")
   fi
 
+  FULL_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+
   info "Building Docker image (all-in-one, compiling inside Docker) ..."
   docker build \
     --platform "$PLATFORM" \
     --file .github/deployment/node/Dockerfile.all-in-one \
     --build-arg BUILD_TYPE="$BUILD_TYPE" \
+    --build-arg GITHUB_SHA="$FULL_SHA" \
     "${MIRROR_ARGS[@]}" \
     "${TAGS[@]}" \
     .
