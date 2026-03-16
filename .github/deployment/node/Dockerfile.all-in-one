@@ -66,9 +66,7 @@ COPY tests tests
 
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 
-ENV YARN_ENABLE_SCRIPTS=0
-RUN yarn install
-ENV YARN_ENABLE_SCRIPTS=1
+RUN YARN_ENABLE_SCRIPTS=0 yarn install --mode=skip-build
 
 ARG BUILD_TYPE=canary
 ENV BUILD_TYPE=${BUILD_TYPE}
