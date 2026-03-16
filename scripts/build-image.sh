@@ -16,27 +16,32 @@ PLATFORM="${PLATFORM:-linux/amd64}"
 
 # Registry: GHCR
 GHCR_REGISTRY="${GHCR_REGISTRY:-ghcr.io}"
-GHCR_REPO="${GHCR_REPO:-}"          # e.g. ohyee/affine
+GHCR_REPO="${GHCR_REPO:-}"
 
 # Registry: Alibaba Cloud ACR
-ALIYUN_REGISTRY="${ALIYUN_REGISTRY:-}"   # e.g. registry.cn-hangzhou.aliyuncs.com
-ALIYUN_REPO="${ALIYUN_REPO:-}"           # e.g. myns/affine
+ALIYUN_REGISTRY="${ALIYUN_REGISTRY:-}"
+ALIYUN_REPO="${ALIYUN_REPO:-}"
 
 # ---------- flags ----------
 PUSH_GHCR=false
 PUSH_ALIYUN=false
 SKIP_BUILD=false
+DOCKER_ONLY=true  # default: build everything inside Docker
 
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
 Build an AFFiNE Docker image for Linux/amd64.
+By default, everything is compiled inside Docker (no local Rust/Node needed).
 
 Options:
   --push-ghcr       Push image to GitHub Container Registry
   --push-aliyun     Push image to Alibaba Cloud ACR
-  --skip-build      Skip the compile steps (web/server/native), use existing artifacts
+  --local-build     Build frontend/server locally, then package into Docker
+                    (requires local yarn + Rust toolchain)
+  --skip-build      Skip the compile steps, use existing artifacts
+                    (only valid with --local-build)
   --version VER     Override the auto-generated version tag
   -h, --help        Show this help message
 
@@ -55,11 +60,12 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --push-ghcr)   PUSH_GHCR=true; shift ;;
-    --push-aliyun) PUSH_ALIYUN=true; shift ;;
-    --skip-build)  SKIP_BUILD=true; shift ;;
-    --version)     VERSION="$2"; shift 2 ;;
-    -h|--help)     usage ;;
+    --push-ghcr)    PUSH_GHCR=true; shift ;;
+    --push-aliyun)  PUSH_ALIYUN=true; shift ;;
+    --local-build)  DOCKER_ONLY=false; shift ;;
+    --skip-build)   SKIP_BUILD=true; shift ;;
+    --version)      VERSION="$2"; shift 2 ;;
+    -h|--help)      usage ;;
     *) echo "Unknown option: $1"; usage ;;
   esac
 done
@@ -73,45 +79,7 @@ cd "$REPO_ROOT"
 info "Version: $VERSION"
 info "Platform: $PLATFORM"
 
-# ---------- compile ----------
-if [[ "$SKIP_BUILD" == "false" ]]; then
-  info "Installing dependencies ..."
-  yarn install
-
-  info "Building @affine/web ..."
-  BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/web build
-
-  info "Building @affine/admin ..."
-  BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/admin build
-
-  info "Building @affine/mobile ..."
-  BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/mobile build
-
-  info "Building server-native (x86_64-unknown-linux-gnu) ..."
-  yarn workspace @affine/server-native build --target x86_64-unknown-linux-gnu
-
-  info "Creating placeholder .node files for non-x64 architectures ..."
-  touch packages/backend/native/server-native.arm64.node
-  touch packages/backend/native/server-native.armv7.node
-
-  info "Building @affine/server ..."
-  yarn workspace @affine/server build
-
-  ok "All artifacts built successfully."
-fi
-
-# ---------- prepare node_modules for Docker ----------
-info "Installing production dependencies ..."
-yarn workspaces focus @affine/server --production
-
-info "Generating Prisma client ..."
-yarn workspace @affine/server prisma generate
-
-info "Moving node_modules into server package ..."
-rm -rf packages/backend/server/node_modules
-mv node_modules packages/backend/server/
-
-# ---------- docker build ----------
+# ---------- collect tags ----------
 TAGS=()
 LOCAL_TAG="${IMAGE_NAME}:${VERSION}"
 TAGS+=("-t" "$LOCAL_TAG")
@@ -136,13 +104,66 @@ if [[ "$PUSH_GHCR" == "true" || "$PUSH_ALIYUN" == "true" ]]; then
   PUSH_FLAG="--push"
 fi
 
-info "Building Docker image ..."
-docker buildx build \
-  --platform "$PLATFORM" \
-  --file .github/deployment/node/Dockerfile \
-  "${TAGS[@]}" \
-  ${PUSH_FLAG} \
-  .
+# ---------- build ----------
+if [[ "$DOCKER_ONLY" == "true" ]]; then
+  # All-in-one: compile everything inside Docker
+  info "Building Docker image (all-in-one, compiling inside Docker) ..."
+  docker buildx build \
+    --platform "$PLATFORM" \
+    --file .github/deployment/node/Dockerfile.all-in-one \
+    --build-arg BUILD_TYPE="$BUILD_TYPE" \
+    "${TAGS[@]}" \
+    ${PUSH_FLAG} \
+    --load \
+    .
+
+else
+  # Local build: compile locally, then package
+  if [[ "$SKIP_BUILD" == "false" ]]; then
+    info "Installing dependencies ..."
+    yarn install
+
+    info "Building @affine/web ..."
+    BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/web build
+
+    info "Building @affine/admin ..."
+    BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/admin build
+
+    info "Building @affine/mobile ..."
+    BUILD_TYPE="$BUILD_TYPE" yarn affine @affine/mobile build
+
+    info "Building server-native (x86_64-unknown-linux-gnu) ..."
+    yarn workspace @affine/server-native build --target x86_64-unknown-linux-gnu
+
+    info "Creating placeholder .node files for non-x64 architectures ..."
+    touch packages/backend/native/server-native.arm64.node
+    touch packages/backend/native/server-native.armv7.node
+
+    info "Building @affine/server ..."
+    yarn workspace @affine/server build
+
+    ok "All artifacts built successfully."
+  fi
+
+  info "Installing production dependencies ..."
+  yarn workspaces focus @affine/server --production
+
+  info "Generating Prisma client ..."
+  yarn workspace @affine/server prisma generate
+
+  info "Moving node_modules into server package ..."
+  rm -rf packages/backend/server/node_modules
+  mv node_modules packages/backend/server/
+
+  info "Building Docker image (local artifacts) ..."
+  docker buildx build \
+    --platform "$PLATFORM" \
+    --file .github/deployment/node/Dockerfile \
+    "${TAGS[@]}" \
+    ${PUSH_FLAG} \
+    --load \
+    .
+fi
 
 ok "Docker image built: $LOCAL_TAG"
 

@@ -6,7 +6,7 @@
 /node_modules
 /target
 
-# Yarn v4 artifacts (not needed for image packaging)
+# Yarn v4 artifacts (keep .yarn/releases for corepack, exclude cache)
 /.yarn/cache
 /.yarn/unplugged
 /.yarn/install-state.gz
@@ -24,3 +24,8 @@
 # Sourcemaps (keep server sourcemap for backend stacktraces)
 **/*.map
 !packages/backend/server/dist/main.js.map
+
+# Desktop / mobile native (not needed for server image)
+/packages/frontend/apps/electron
+/packages/frontend/apps/ios
+/packages/frontend/apps/android
