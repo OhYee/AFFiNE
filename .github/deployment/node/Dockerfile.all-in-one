@@ -22,11 +22,8 @@ FROM ${REGISTRY_MIRROR}rust:1.93-bookworm AS rust-builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      clang lld pkg-config libssl-dev \
-      curl ca-certificates nodejs npm && \
+      clang lld pkg-config libssl-dev && \
     rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g @napi-rs/cli@3.5.0
 
 WORKDIR /build
 
@@ -37,10 +34,10 @@ COPY packages/common packages/common
 ENV CC="clang -D_BSD_SOURCE"
 ENV TARGET_CC="clang -D_BSD_SOURCE"
 
-RUN cd packages/backend/native && \
-    napi build --release --strip --no-const-enum \
-      --target x86_64-unknown-linux-gnu && \
-    mv server-native.node server-native.x64.node
+RUN cargo build --release -p affine_server_native --target x86_64-unknown-linux-gnu && \
+    cp target/x86_64-unknown-linux-gnu/release/libaffine_server_native.so \
+       packages/backend/native/server-native.x64.node && \
+    strip packages/backend/native/server-native.x64.node
 
 # ============================================================
 # Stage 2: Build frontend + server (Node.js)
