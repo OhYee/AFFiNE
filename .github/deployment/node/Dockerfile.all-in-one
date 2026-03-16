@@ -1,10 +1,9 @@
-# syntax=docker/dockerfile:1.7
 #
 # All-in-one build Dockerfile for AFFiNE (Linux/amd64).
 # Compiles everything inside Docker — no local Rust/Node toolchain needed.
 #
 # Usage:
-#   docker buildx build --platform linux/amd64 \
+#   docker build --platform linux/amd64 \
 #     -f .github/deployment/node/Dockerfile.all-in-one \
 #     -t affine:latest .
 
