@@ -99,26 +99,17 @@ if [[ "$PUSH_ALIYUN" == "true" ]]; then
   TAGS+=("-t" "$ALIYUN_TAG" "-t" "$ALIYUN_LATEST")
 fi
 
-PUSH_FLAG=""
-if [[ "$PUSH_GHCR" == "true" || "$PUSH_ALIYUN" == "true" ]]; then
-  PUSH_FLAG="--push"
-fi
-
 # ---------- build ----------
 if [[ "$DOCKER_ONLY" == "true" ]]; then
-  # All-in-one: compile everything inside Docker
   info "Building Docker image (all-in-one, compiling inside Docker) ..."
-  docker buildx build \
+  docker build \
     --platform "$PLATFORM" \
     --file .github/deployment/node/Dockerfile.all-in-one \
     --build-arg BUILD_TYPE="$BUILD_TYPE" \
     "${TAGS[@]}" \
-    ${PUSH_FLAG} \
-    --load \
     .
 
 else
-  # Local build: compile locally, then package
   if [[ "$SKIP_BUILD" == "false" ]]; then
     info "Installing dependencies ..."
     yarn install
@@ -156,13 +147,24 @@ else
   mv node_modules packages/backend/server/
 
   info "Building Docker image (local artifacts) ..."
-  docker buildx build \
+  docker build \
     --platform "$PLATFORM" \
     --file .github/deployment/node/Dockerfile \
     "${TAGS[@]}" \
-    ${PUSH_FLAG} \
-    --load \
     .
+fi
+
+# ---------- push ----------
+if [[ "$PUSH_GHCR" == "true" ]]; then
+  info "Pushing to GHCR ..."
+  docker push "$GHCR_TAG"
+  docker push "$GHCR_LATEST"
+fi
+
+if [[ "$PUSH_ALIYUN" == "true" ]]; then
+  info "Pushing to Alibaba ACR ..."
+  docker push "$ALIYUN_TAG"
+  docker push "$ALIYUN_LATEST"
 fi
 
 ok "Docker image built: $LOCAL_TAG"
