@@ -41,6 +41,7 @@ export class ImageBlockPageComponent extends SignalWatcher(
       line-height: 0;
       cursor: pointer;
       max-width: 100%;
+      overflow: hidden;
     }
 
     affine-page-image .loading {
@@ -76,6 +77,7 @@ export class ImageBlockPageComponent extends SignalWatcher(
     }
 
     affine-page-image .resizable-img img {
+      max-width: 100%;
       width: 100%;
       height: 100%;
     }
