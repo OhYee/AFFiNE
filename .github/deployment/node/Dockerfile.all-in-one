@@ -23,13 +23,10 @@ FROM ${REGISTRY_MIRROR}rust:1.93-bookworm AS rust-builder
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       clang lld pkg-config libssl-dev \
-      curl ca-certificates && \
+      curl ca-certificates nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    corepack enable && corepack prepare yarn@4.12.0 --activate && \
-    rm -rf /var/lib/apt/lists/*
+RUN npm install -g @napi-rs/cli@3.5.0
 
 WORKDIR /build
 
@@ -37,16 +34,11 @@ COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY packages/backend/native packages/backend/native
 COPY packages/common packages/common
 
-COPY package.json .yarnrc.yml yarn.lock ./
-COPY .yarn .yarn
-
-RUN yarn workspaces focus @affine/server-native --production=false 2>/dev/null || true
-
 ENV CC="clang -D_BSD_SOURCE"
 ENV TARGET_CC="clang -D_BSD_SOURCE"
 
 RUN cd packages/backend/native && \
-    npx @napi-rs/cli build --release --strip --no-const-enum \
+    napi build --release --strip --no-const-enum \
       --target x86_64-unknown-linux-gnu && \
     mv server-native.node server-native.x64.node
 
