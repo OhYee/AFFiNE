@@ -22,6 +22,9 @@ GHCR_REPO="${GHCR_REPO:-}"
 ALIYUN_REGISTRY="${ALIYUN_REGISTRY:-}"
 ALIYUN_REPO="${ALIYUN_REPO:-}"
 
+# Docker Hub mirror (for China, e.g. docker.m.daocloud.io/)
+REGISTRY_MIRROR="${REGISTRY_MIRROR:-}"
+
 # ---------- flags ----------
 PUSH_GHCR=false
 PUSH_ALIYUN=false
@@ -53,6 +56,7 @@ Environment variables:
   GHCR_REPO          GHCR repository path     (e.g. ohyee/affine)
   ALIYUN_REGISTRY    Alibaba ACR registry     (e.g. registry.cn-hangzhou.aliyuncs.com)
   ALIYUN_REPO        Alibaba ACR repo path    (e.g. myns/affine)
+  REGISTRY_MIRROR    Docker Hub mirror prefix (e.g. docker.m.daocloud.io/)
 
 EOF
   exit 0
@@ -101,11 +105,18 @@ fi
 
 # ---------- build ----------
 if [[ "$DOCKER_ONLY" == "true" ]]; then
+  MIRROR_ARGS=()
+  if [[ -n "$REGISTRY_MIRROR" ]]; then
+    info "Using registry mirror: $REGISTRY_MIRROR"
+    MIRROR_ARGS+=(--build-arg "REGISTRY_MIRROR=${REGISTRY_MIRROR}")
+  fi
+
   info "Building Docker image (all-in-one, compiling inside Docker) ..."
   docker build \
     --platform "$PLATFORM" \
     --file .github/deployment/node/Dockerfile.all-in-one \
     --build-arg BUILD_TYPE="$BUILD_TYPE" \
+    "${MIRROR_ARGS[@]}" \
     "${TAGS[@]}" \
     .
 
