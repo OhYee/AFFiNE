@@ -66,7 +66,9 @@ COPY tests tests
 
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 
-RUN YARN_ENABLE_SCRIPTS=0 yarn install --mode=skip-build
+RUN YARN_ENABLE_SCRIPTS=0 yarn install --mode=skip-build && \
+    yarn workspace @affine/templates build && \
+    yarn workspace @affine/server prisma generate
 
 ARG BUILD_TYPE=canary
 ARG GITHUB_SHA=0000000000000000000000000000000000000000
