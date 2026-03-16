@@ -65,6 +65,17 @@ export class WorkspacesController {
       .user(user?.id ?? 'anonymous')
       .workspace(workspaceId)
       .assert('Workspace.Read');
+
+    // If a public path is configured, redirect directly to CDN/public storage URL.
+    // This avoids proxying blob data through the AFFiNE server and reduces bandwidth usage.
+    const publicUrl = this.storage.getPublicUrl(workspaceId, name);
+    if (publicUrl) {
+      if (redirect === 'manual') {
+        return res.send({ url: publicUrl });
+      }
+      return res.redirect(publicUrl);
+    }
+
     const { body, metadata, redirectUrl } = await this.storage.get(
       workspaceId,
       name,
